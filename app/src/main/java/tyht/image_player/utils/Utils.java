@@ -224,12 +224,12 @@ public class Utils {
                 int temp_y = (int)(start_y + j * Math.sin(2*Math.PI*i/360));//从中心点竖直往下为第一帧，逆时针转
                 int temp_x = (int)(start_x + j * Math.cos(2*Math.PI*i/360));
                 int color = bitmap.getPixel(temp_x, temp_y);
-                String red = Integer.toHexString(Color.red(color));
-                String green = Integer.toHexString(Color.green(color));
-                String blue = Integer.toHexString(Color.blue(color));
-                red_line += red;
-                green_line += green;
-                blue_line += blue;
+                String red = Integer.toString(Color.red(color));
+                String green = Integer.toString(Color.green(color));
+                String blue = Integer.toString(Color.blue(color));
+                red_line += red + " ";
+                green_line += green + " ";
+                blue_line += blue + " ";
                 temp_log += " (" + temp_x + "," + temp_y +") = (" + red + "," + green + "," + blue + ") ";
             }
             writeTxtToFile(red_line, getfilepath(),newfilename);

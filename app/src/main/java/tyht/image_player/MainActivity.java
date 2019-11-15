@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         button = (Button)findViewById(R.id.button);
         RGBfilelist = new ArrayList<>();
         Log.i(TAG," onCreate ");
-        Utils.removeFile("/sdcard/Android_Image/filelist.txt");
+        Utils.removeFile("/sdcard/AndroidImage/filelist.txt");
 
         try{
             assets = getAssets();
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                     S += " 缩放后大小为：" + outbitmap.getWidth() + "X" + outbitmap.getHeight() ;
                     text.setText(S);
                     image.setImageBitmap(outbitmap);
-                    //Utils.ReadTxtFile("/sdcard/Android_Image/filelist.txt");
+                    //Utils.ReadTxtFile("/sdcard/AndroidImage/filelist.txt");
 //                    for(int i = 0 ; i < RGBfilelist.size(); i++ ){
 //                        String filename = Utils.getfilepath() + RGBfilelist.get(i);
 //                        Log.i(TAG,"filename = " + filename);
