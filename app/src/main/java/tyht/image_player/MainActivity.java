@@ -49,13 +49,18 @@ public class MainActivity extends AppCompatActivity {
                 String filename = Images[i];
                 Log.i(TAG," filename" + i + " = " + filename );
                 if(filename.endsWith(".jpg")){
-                    String newfilename = filename.substring(0, filename.indexOf(".jpg"));
+                    final String newfilename = filename.substring(0, filename.indexOf(".jpg"));
                     Log.i(TAG," newfilename = " + newfilename);
                     Utils.writeTxtToFile(newfilename, Utils.getfilepath(), filelist);
                     RGBfilelist.add(newfilename);
                     InputStream srcInput = assets.open(filename);
-                    Bitmap srcBitmap = BitmapFactory.decodeStream(srcInput,null, new BitmapFactory.Options());
-                    Utils.processFile(Utils.comp(srcBitmap), newfilename);
+                    final Bitmap srcBitmap = BitmapFactory.decodeStream(srcInput,null, new BitmapFactory.Options());
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            Utils.processFile(Utils.comp(srcBitmap), newfilename);
+                        }
+                    }.start();
                 }
                 //Utils.
             }
