@@ -189,7 +189,7 @@ public class Utils {
     public static void removeFile(String strFilePath) {
         String path = strFilePath;
         File file = new File(path);
-        Log.i(TAG,"file is exists = " + file.exists() + " begin delete");
+        Log.i(TAG,"file: " + strFilePath + " is exists = " + file.exists() + " begin delete");
         if(file.exists()&& file.isDirectory() == false){
             file.delete();
         }
@@ -235,10 +235,18 @@ public class Utils {
             writeTxtToFile(red_line, getfilepath(),newfilename);
             writeTxtToFile(green_line, getfilepath(),newfilename);
             writeTxtToFile(blue_line, getfilepath(),newfilename);
-            Log.i(TAG," red_line = " + red_line);
-            Log.i(TAG," green_line = " + green_line);
-            Log.i(TAG," blue_line = " + blue_line);
+            //Log.i(TAG," red_line = " + red_line);
+            //Log.i(TAG," green_line = " + green_line);
+            //Log.i(TAG," blue_line = " + blue_line);
         }
+    }
 
+    public static boolean checkFile(String path) {
+        boolean ret = false;
+        File file = new File(path);
+        if(file.isDirectory() == false && file.exists()){
+            ret = true;
+        }
+        return ret;
     }
 }
