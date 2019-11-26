@@ -1,5 +1,6 @@
 package tyht.image_player;
 
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
     TextView text;
     Button button;
     ArrayList<String> RGBfilelist;
+    ProgressDialog progressDialog;
+    Bitmap coverBitmap = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         image = (ImageView)findViewById(R.id.image);
         text = (TextView)findViewById(R.id.text);
+        text.setText("请选择一个视频文件");
         button = (Button)findViewById(R.id.button);
         RGBfilelist = new ArrayList<>();
         Log.i(TAG," onCreate ");
@@ -83,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         }catch (IOException e){
             e.printStackTrace();
         }
-
+        initProgressDialog();
 //        ExtractMpegFramesTest mTest = new ExtractMpegFramesTest();
 //        try {
 //            mTest.testExtractMpegFrames();
@@ -114,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG,"uristring = " + uristring);
                 if(uristring.startsWith("file:"));
                 int index = uristring.lastIndexOf("/") + 1;
-                String title = uristring.substring(index);
+                final String title = uristring.substring(index);
                 ContentResolver cr = this.getContentResolver();
                 Uri baseUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;//获取媒体数据库的外部存储内容的Uri
                 //String wherecause = "_data like = ?";
@@ -136,66 +140,71 @@ public class MainActivity extends AppCompatActivity {
                     text.setText(S);
                     if(cursor.getColumnIndex(MediaStore.Video.Media.DATA) != -1){
                         String filepath = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DATA));
+                        final MediaMetadataRetriever object = new MediaMetadataRetriever();
+                        object.setDataSource(filepath);
+                        final int duration = Integer.parseInt(object.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+                        coverBitmap = object.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST);
+                        image.setImageBitmap(coverBitmap);
                         Log.i(TAG,"filepath = " + filepath);
+                        progressDialog.show();
                         //Uri path_uri = MediaStore.Video.Media.getContentUri(filepath);
                         //Log.i(TAG,"path_uri = " + path_uri);
-                        MediaMetadataRetriever object = new MediaMetadataRetriever();
-                        object.setDataSource(filepath);
-                        Bitmap saveBitmap = object.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST);
-                        image.setImageBitmap(saveBitmap);
-                        String saveFilename = title.substring(0,title.indexOf(".")) + ".jpg";
-                        Log.i(TAG,"saveFilename = " + saveFilename);
-                        try{
-                            File file = new File(Utils.getfilepath() + saveFilename);
-                            FileOutputStream out = new FileOutputStream(file);
-                            saveBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                            out.flush();
-                            out.close();
-                            Log.i(TAG,"save file = " + file.getAbsolutePath());
-                            Log.w(TAG,"save picture finish!");
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        new Thread(){
+                            @Override
+                            public void run() {
+                                int index = 0;
+                                Log.i(TAG,"duration = " + duration);
+                                String saveFilename = title.substring(0,title.indexOf("."));
+                                File newFolder = new File(Utils.getfilepath() + saveFilename + "/");
+                                if(!newFolder.exists()){
+                                    new File(Utils.getfilepath() + saveFilename + "/").mkdir();
+                                }
+                                Log.i(TAG,"is Folder exit = " + newFolder.exists() + " isDirectory = " + newFolder.isDirectory());
+                                Log.i(TAG,"saveFilename = " + saveFilename);
+                                for(int timeus = 0; timeus < duration; timeus += 42){
+                                    index ++;
+                                    Log.i(TAG,"begin save index = " + index);
+                                    Log.w(TAG,"timeus = " + timeus);
+                                    Bitmap saveBitmap = object.getFrameAtTime(timeus*1000, MediaMetadataRetriever.OPTION_CLOSEST);
+                                    if(saveBitmap != null){
+                                        try{
+                                            File file = new File( newFolder, "image-" + index + ".jpg");
+                                            FileOutputStream out = new FileOutputStream(file);
+                                            saveBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                                            out.flush();
+                                            out.close();
+                                            Log.i(TAG,"save file = " + file.getAbsolutePath());
+                                        } catch (FileNotFoundException e) {
+                                            e.printStackTrace();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                                //Bitmap saveBitmap = object.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST);
+                                //image.setImageBitmap(saveBitmap);
+                                //Log.i(TAG,"saveFilename = " + saveFilename);
+                                if(progressDialog.isShowing()){
+                                    progressDialog.dismiss();
+                                }
+                                Log.i(TAG,"save files finish !!!");
+                                Uri uri = Uri.fromFile(newFolder);
+                                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+                                Log.w(TAG,"sendBroadcast uri = " + uri);
+                            }
+                        }.start();
                     }
                 }
-
-//                ContentResolver cr = this.getContentResolver();
-//                Cursor cursor = cr.query(uri, null, null, null, null);
-//                if(cursor != null){
-                    // 视频ID:MediaStore.Audio.Media._ID
-                    //int videoId = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
-                    // 视频名称：MediaStore.Audio.Media.TITLE
-//                    String title = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE));
-//                    // 视频路径：MediaStore.Audio.Media.DATA
-//                    String videoPath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA));
-//                    // 视频时长：MediaStore.Audio.Media.DURATION
-//                    int duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION));
-//                    // 视频大小：MediaStore.Audio.Media.SIZE
-//                    long size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE));
-//
-//                    // 视频缩略图路径：MediaStore.Images.Media.DATA
-//                    String imagePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
-//                    // 缩略图ID:MediaStore.Audio.Media._ID
-//                    int imageId = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
-//                    // 方法一 Thumbnails 利用createVideoThumbnail 通过路径得到缩略图，保持为视频的默认比例
-//                    // 第一个参数为 ContentResolver，第二个参数为视频缩略图ID， 第三个参数kind有两种为：MICRO_KIND和MINI_KIND 字面意思理解为微型和迷你两种缩略模式，前者分辨率更低一些。
-//                    Bitmap bitmap1 = MediaStore.Video.Thumbnails.getThumbnail(cr, imageId, MediaStore.Video.Thumbnails.MICRO_KIND, null);
-//
-//                    // 方法二 ThumbnailUtils 利用createVideoThumbnail 通过路径得到缩略图，保持为视频的默认比例
-//                    // 第一个参数为 视频/缩略图的位置，第二个依旧是分辨率相关的kind
-//                    Bitmap bitmap2 = ThumbnailUtils.createVideoThumbnail(imagePath, MediaStore.Video.Thumbnails.MICRO_KIND);
-//                    // 如果追求更好的话可以利用 ThumbnailUtils.extractThumbnail 把缩略图转化为的制定大小
-////                        ThumbnailUtils.extractThumbnail(bitmap, width,height ,ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
-//                    int width = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.WIDTH));
-//                    int height = cursor.getInt(cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT));
-//                    String S= "视频名称：" + title +" 分辨率：" + width + "X" + height;
-//                    text.setText(S);
-//                    image.setImageBitmap(bitmap1);
-//                }
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void initProgressDialog() {
+        progressDialog = new ProgressDialog(MainActivity.this);
+        progressDialog.setIndeterminate(false);//循环滚动
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setMessage("loading...");
+        progressDialog.setCancelable(false);//false不能取消显示，true可以取消显示
     }
 }
